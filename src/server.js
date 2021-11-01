@@ -1,0 +1,101 @@
+const express = require('express')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const session = require('express-session')
+const passport = require('passport')
+const OsuStrategy = require('passport-osu').default
+
+const mongoose = require('mongoose')
+
+const MemberSchema = new mongoose.Schema({
+    displayName: {type: String, required: true},
+    profileId: {type: String, required: true, unique: true},
+    discordProfileId: {type: String, required: true, unique: true}
+})
+
+const MemberModel = mongoose.model('member', MemberSchema)
+
+async function runServer(client) {
+
+    await mongoose.connect(`mongodb://${process.env.MONGO_HOST || 'localhost'}:${process.env.MONGO_PORT || 27017}/${process.env.MONGO_DATABASE}`);
+
+    const app = express()
+
+    app.use(cookieParser())
+    app.use(bodyParser.json())
+    app.use(session({secret: process.env.SESSION_SECRET}))
+    app.use(passport.initialize())
+    app.use(passport.session())
+
+    passport.use(new OsuStrategy({
+            type: 'StrategyOptionsWithRequest',
+            clientID: process.env.OSU_CLIENT_ID,
+            clientSecret: process.env.OSU_CLIENT_SECRET,
+            callbackURL: process.env.OSU_CLIENT_CALLBACK,
+            passReqToCallback: true,
+            scope: ['identify']
+        }, async (req, accessToken, refreshToken, profile, done) => {
+
+            const discordProfileId = req.session.discordUserId
+
+            const user = await (MemberModel.findOne({profileId: profile.id}))
+
+            if (user) {
+                if(user.discordProfileId !== discordProfileId) {
+                    throw new Error()
+                }
+
+                done(null, user)
+            } else {
+                const newUser = new MemberModel({
+                    displayName: profile.displayName,
+                    profileId: profile.id,
+                    discordProfileId
+                })
+
+                await newUser.save()
+
+                done(null, newUser)
+            }
+        })
+    )
+
+    passport.serializeUser((user, done) => {
+        done(null, user.profileId);
+    });
+
+    passport.deserializeUser(async (id, done) => {
+        const user = await MemberModel.findOne({profileId: id})
+        done(null, user.profileId);
+    });
+
+    app.get('/verify', async (req, res, next) => {
+        const discordUserId = req.query.q
+        if (!discordUserId) {
+            res.sendStatus(400)
+        } else {
+            const guild = await client.guilds.fetch({guild: process.env.DISCORD_GUILD_ID})
+
+            if (!guild)
+                return res.sendStatus(404)
+
+            const member = await guild.members.fetch({user: discordUserId})
+
+            if (!member)
+                return res.sendStatus(404)
+
+            req.session.discordUserId = discordUserId
+            next()
+        }
+    }, passport.authorize('osu'))
+
+    app.get('/verify/callback', passport.authenticate('osu', {failureRedirect: '/login/error'}), (req, res) => {
+        res.redirect('/success')
+    })
+
+    app.get('/success')
+
+    app.listen(process.env.PORT || 4040, () => console.log(`Server started listening at port ${process.env.PORT || 4040}`))
+}
+
+module.exports = runServer
