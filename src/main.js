@@ -121,7 +121,10 @@ Click here to verify your account: http://mapping-tools.io/avalon/verify?q=${mem
                     `Welcome to Avalon!
 Click here to verify your account: http://mapping-tools.io/avalon/verify?q=${interaction.member.user.id}`
                 )
-                interaction.reply(`I've sent you instructions on how to verify as a private message.`);
+                if(interaction.user.id === '430781346730999809')
+                    interaction.reply('fuck you')
+                else
+                    interaction.reply(`I've sent you instructions on how to verify as a private message.`);
             } catch (e) {
                 console.log(e)
                 interaction.reply(`I couldn't send you instructions on how to verify. Please enable private messages on this server.`);
