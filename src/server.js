@@ -92,9 +92,9 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
             if (!member)
                 return res.sendStatus(404)
 
-            token.remove()
-
             req.session.discordProfileId = token.discordProfileId
+            
+            token.remove()
             next()
         }
     }, passport.authorize('osu'))
