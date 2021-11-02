@@ -101,7 +101,7 @@ const MemberModel = mongoose.model('member', MemberSchema);
         } else {
             try {
                 await member.send(`Welcome to Avalon!
-Click here to verify your account: http://mapping-tools.io/avalon/verify?q=${member.user.id}`)
+Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=${member.user.id}`)
                 await channel.send(`Hello <@${member.id}>! Please check your DMs for instructions on how to verify your account.`)
             } catch (e) {
                 console.log(e)
@@ -119,7 +119,7 @@ Click here to verify your account: http://mapping-tools.io/avalon/verify?q=${mem
             try {
                 await interaction.member.send(
                     `Welcome to Avalon!
-Click here to verify your account: http://mapping-tools.io/avalon/verify?q=${interaction.member.user.id}`
+Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=${interaction.member.user.id}`
                 )
                 if(interaction.user.id === '430781346730999809')
                     interaction.reply('fuck you')
