@@ -61,7 +61,7 @@ async function runServer(client, MemberModel) {
         done(null, user.profileId);
     });
 
-    app.get('/verify', async (req, res, next) => {
+    app.get('/avalon/verify', async (req, res, next) => {
         const discordUserId = req.query.q
         if (!discordUserId) {
             res.sendStatus(400)
