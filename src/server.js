@@ -28,6 +28,11 @@ async function runServer(client, MemberModel) {
 
             const discordProfileId = req.session.discordUserId
 
+            if(!discordProfileId) {
+                done(new Error('no user id set', null))
+                return
+            }
+
             const user = await (MemberModel.findOne({profileId: profile.id}))
 
             if (user) {
