@@ -52,7 +52,7 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
                 })
 
                 await newUser.save()
-
+                VerifyTokenModel.deleteMany({discordProfileId})
                 done(null, newUser)
             }
         })
@@ -93,8 +93,6 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
                 return res.sendStatus(404)
 
             req.session.discordProfileId = token.discordProfileId
-
-            token.remove()
             next()
         }
     }, passport.authorize('osu'))
