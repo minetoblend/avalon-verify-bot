@@ -73,7 +73,7 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
         if (!tokenId) {
             res.status(400).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
         } else {
-            const token = VerifyTokenModel.findOne({token: tokenId})
+            const token = await VerifyTokenModel.findOne({token: tokenId})
 
             if(dateFns.isAfter(new Date(), token.expiresAt)) {
                 return res.status(404).sendFile(path.resolve(__dirname, '../public/expired.html'))
@@ -92,7 +92,6 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
             if (!member)
                 return res.sendStatus(404)
 
-            console.log(token)
             req.session.discordProfileId = token.discordProfileId
 
             token.remove()
