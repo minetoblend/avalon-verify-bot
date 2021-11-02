@@ -75,12 +75,12 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
         } else {
             const token = await VerifyTokenModel.findOne({token: tokenId})
 
+            if(!token)
+                return res.status(404).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
+
             if(dateFns.isAfter(new Date(), token.expiresAt)) {
                 return res.status(404).sendFile(path.resolve(__dirname, '../public/expired.html'))
             }
-
-            if(!token)
-                return res.status(404).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
 
             const guild = await client.guilds.fetch({guild: process.env.DISCORD_GUILD_ID})
 
