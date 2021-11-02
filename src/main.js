@@ -70,12 +70,8 @@ const MemberModel = mongoose.model('member', MemberSchema);
             await verify(interaction)
         }
 
-        if(interaction.commandName === 'profile') {
-            console.log(interaction.member.id)
-            console.log(interaction.user.id)
+        else if(interaction.commandName === 'profile') {
             const user =  interaction.options.getUser('user') || interaction.user
-
-            console.log(user)
 
             const member = await MemberModel.findOne({discordProfileId: user.id})
             if(member) {
@@ -112,7 +108,7 @@ Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=$
     })
 
     async function verify(interaction) {
-
+        console.log('verify')
         if (interaction.member.roles.cache.some(role => role.id === '904760669520408628')) {
             interaction.reply('You are already verified')
         } else {
