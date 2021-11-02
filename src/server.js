@@ -5,6 +5,7 @@ const session = require('express-session')
 const passport = require('passport')
 const OsuStrategy = require('passport-osu').default
 const path = require('path')
+const dateFns = require('date-fns')
 
 
 async function runServer(client, MemberModel, VerifyTokenModel) {
@@ -73,6 +74,11 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
             res.status(400).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
         } else {
             const token = VerifyTokenModel.findOne({token: tokenId})
+
+            if(dateFns.isAfter(new Date(), token.expiresAt)) {
+                return res.status(404).sendFile(path.resolve(__dirname, '../public/expired.html'))
+            }
+
             if(!token)
                 return res.status(404).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
 
