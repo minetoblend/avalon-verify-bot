@@ -4,20 +4,10 @@ const bodyParser = require('body-parser')
 const session = require('express-session')
 const passport = require('passport')
 const OsuStrategy = require('passport-osu').default
+const path = require('path')
 
-const mongoose = require('mongoose')
 
-const MemberSchema = new mongoose.Schema({
-    displayName: {type: String, required: true},
-    profileId: {type: String, required: true, unique: true},
-    discordProfileId: {type: String, required: true, unique: true}
-})
-
-const MemberModel = mongoose.model('member', MemberSchema)
-
-async function runServer(client) {
-
-    await mongoose.connect(`mongodb://${process.env.MONGO_HOST || 'localhost'}:${process.env.MONGO_PORT || 27017}/${process.env.MONGO_DATABASE}`);
+async function runServer(client, MemberModel) {
 
     const app = express()
 
@@ -41,8 +31,10 @@ async function runServer(client) {
             const user = await (MemberModel.findOne({profileId: profile.id}))
 
             if (user) {
-                if(user.discordProfileId !== discordProfileId) {
-                    throw new Error()
+                console.log(user.discordProfileId,)
+                if (user.discordProfileId !== discordProfileId) {
+                    done(new Error('osu profile already linked with different discord user'))
+                    return
                 }
 
                 done(null, user)
@@ -89,11 +81,30 @@ async function runServer(client) {
         }
     }, passport.authorize('osu'))
 
-    app.get('/verify/callback', passport.authenticate('osu', {failureRedirect: '/login/error'}), (req, res) => {
-        res.redirect('/success')
+    app.get('/avalon/verify/callback', passport.authenticate('osu', {failureRedirect: '/login/error'}), async (req, res) => {
+        const user = req.user
+
+        const guild = await client.guilds.fetch({guild: process.env.DISCORD_GUILD_ID})
+
+        if (!guild)
+            return res.sendStatus(404)
+
+        const member = await guild.members.fetch({user: user.discordProfileId})
+        console.log(member)
+
+        const role = await guild.roles.fetch('904760669520408628')
+        try {
+            console.log(role)
+            await member.roles.add(role)
+            res.redirect('/success')
+        } catch (e) {
+            res.redirect('/login/error')
+        }
     })
 
-    app.get('/success')
+    app.get('/success', (req, res) => res.sendFile(
+        path.resolve(__dirname, '../public/success.html')
+    ))
 
     app.listen(process.env.PORT || 4040, () => console.log(`Server started listening at port ${process.env.PORT || 4040}`))
 }
