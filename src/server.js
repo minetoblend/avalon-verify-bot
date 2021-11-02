@@ -81,7 +81,7 @@ async function runServer(client, MemberModel) {
         }
     }, passport.authorize('osu'))
 
-    app.get('/verify/callback', passport.authenticate('osu', {failureRedirect: '/login/error'}), async (req, res) => {
+    app.get('/avalon/verify/callback', passport.authenticate('osu', {failureRedirect: '/login/error'}), async (req, res) => {
         const user = req.user
 
         const guild = await client.guilds.fetch({guild: process.env.DISCORD_GUILD_ID})
@@ -102,7 +102,7 @@ async function runServer(client, MemberModel) {
         }
     })
 
-    app.get('/success', (req, res) => res.sendFile(
+    app.get('/avalon/success', (req, res) => res.sendFile(
         path.resolve(__dirname, '../public/success.html')
     ))
 
