@@ -11,15 +11,15 @@ const commands = [
     name: 'verify',
     description: 'Verifies your osu account'
 },
-    new SlashCommandBuilder()
-        .setName('profile')
-        .setDescription(`Shows a user's osu profile`)
-        .addUserOption(option =>
-            option.setName('user')
-                .setDescription('The user to show the osu profile of')
-                .setRequired(false)
+new SlashCommandBuilder()
+    .setName('profile')
+    .setDescription(`Shows a user's osu profile`)
+    .addUserOption(option =>
+        option.setName('user')
+            .setDescription('The user to show the osu profile of')
+            .setRequired(false)
 
-        ).toJSON()
+    ).toJSON()
 
 
 
@@ -136,6 +136,10 @@ Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=$
         if(message.mentions.users.some(it => it.id === client.user.id)) {
             if(['hello', 'hi'].some(end => message.content.toLowerCase().endsWith(end)))
                 message.reply('Hi :flushed:')
+        }
+
+        if(message.content.toLowerCase().includes('not verified')) {
+            message.react('👀')
         }
     })
 
