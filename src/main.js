@@ -86,7 +86,7 @@ const MemberModel = mongoose.model('member', MemberSchema);
         console.log('member joined')
 
 
-        const channel = await member.guild.channels.fetch('879095417600634971')
+        const channel = await member.guild.channels.fetch('878372599799902300')
 
         const user = await MemberModel.findOne({discordProfileId: member.id})
 
