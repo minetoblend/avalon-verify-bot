@@ -7,7 +7,7 @@ const OsuStrategy = require('passport-osu').default
 const path = require('path')
 
 
-async function runServer(client, MemberModel) {
+async function runServer(client, MemberModel, VerifyTokenModel) {
 
     const app = express()
 
@@ -26,7 +26,7 @@ async function runServer(client, MemberModel) {
             scope: ['identify']
         }, async (req, accessToken, refreshToken, profile, done) => {
 
-            const discordProfileId = req.session.discordUserId
+            const discordProfileId = req.session.discordProfileId
 
             if(!discordProfileId) {
                 done(new Error('no user id set', null))
@@ -67,24 +67,28 @@ async function runServer(client, MemberModel) {
     });
 
     app.get('/avalon/verify', async (req, res, next) => {
-        const discordUserId = req.query.q
+        const tokenId = req.query.q
 
-        console.log('/verify')
-
-        if (!discordUserId) {
-            res.sendStatus(400)
+        if (!tokenId) {
+            res.status(400).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
         } else {
+            const token = VerifyTokenModel.findOne({token: tokenId})
+            if(!token)
+                return res.status(404).sendFile(path.resolve(__dirname, '../public/invalid-token.html'))
+
             const guild = await client.guilds.fetch({guild: process.env.DISCORD_GUILD_ID})
 
             if (!guild)
                 return res.sendStatus(404)
 
-            const member = await guild.members.fetch({user: discordUserId})
+            const member = await guild.members.fetch({user: token.discordProfileId})
 
             if (!member)
                 return res.sendStatus(404)
 
-            req.session.discordUserId = discordUserId
+            token.remove()
+
+            req.session.discordProfileId = token.discordProfileId
             next()
         }
     }, passport.authorize('osu'))
@@ -98,20 +102,22 @@ async function runServer(client, MemberModel) {
             return res.sendStatus(404)
 
         const member = await guild.members.fetch({user: user.discordProfileId})
-        console.log(member)
 
         const role = await guild.roles.fetch('904760669520408628')
         try {
-            console.log(role)
             await member.roles.add(role)
             res.redirect('/avalon/success')
         } catch (e) {
-            res.redirect('/login/error')
+            res.redirect('/avalon/error')
         }
     })
 
     app.get('/avalon/success', (req, res) => res.sendFile(
         path.resolve(__dirname, '../public/success.html')
+    ))
+
+    app.get('/avalon/error', (req, res) => res.status(500).sendFile(
+        path.resolve(__dirname, '../public/error.html')
     ))
 
     app.listen(process.env.PORT || 4040, () => console.log(`Server started listening at port ${process.env.PORT || 4040}`))

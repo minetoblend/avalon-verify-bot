@@ -4,7 +4,8 @@ const {REST} = require('@discordjs/rest');
 const {Routes} = require('discord-api-types/v9');
 const mongoose = require('mongoose')
 const { SlashCommandBuilder } = require('@discordjs/builders');
-
+const dateFns = require('date-fns')
+const uuid = require('uuid')
 
 const commands = [
 {
@@ -35,6 +36,14 @@ const MemberSchema = new mongoose.Schema({
 
 const MemberModel = mongoose.model('member', MemberSchema);
 
+const VerifyTokenSchema = new mongoose.Schema({
+    token: { type: String, required: true, index: true, unique: true },
+    discordProfileId: { type: String, required: true, index: true, unique: true },
+    expiresAt: { type: Date, required: true }
+})
+
+const VerifyTokenModel = mongoose.model('verifyToken', VerifyTokenSchema);
+
 
 (async () => {
     try {
@@ -60,7 +69,7 @@ const MemberModel = mongoose.model('member', MemberSchema);
     client.on('ready', () => {
         console.log(`Logged in as ${client.user.tag}!`);
 
-        require('./server')(client, MemberModel)
+        require('./server')(client, MemberModel, VerifyTokenModel)
     });
 
     client.on('interactionCreate', async interaction => {
@@ -82,10 +91,24 @@ const MemberModel = mongoose.model('member', MemberSchema);
         }
     });
 
+    async function createVerifyToken(user) {
+        const existingToken = await VerifyTokenModel.deleteMany({ discordProfileId: user.id })
+        const token = new VerifyTokenModel({
+            token: uuid.v4(),
+            discordProfileId: user.id,
+            expiresAt: dateFns.addMinutes(new Date(), 10)
+        })
+        await token.save()
+        return token
+    }
+
+    async function sendVerifyMessage(user) {
+        const token = await createVerifyToken(user)
+        await user.send(`Welcome to Avalon!
+Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=${token.token}`)
+    }
+
     client.on('guildMemberAdd', async member => {
-        console.log('member joined')
-
-
         const channel = await member.guild.channels.fetch('878372599799902300')
 
         const user = await MemberModel.findOne({discordProfileId: member.id})
@@ -96,8 +119,7 @@ const MemberModel = mongoose.model('member', MemberSchema);
             await channel.send(`Hello <@${member.id}>! Looks like I've seen you before. I automatically verified your account, no need to verify yourself.`)
         } else {
             try {
-                await member.send(`Welcome to Avalon!
-Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=${member.user.id}`)
+                await sendVerifyMessage(member.user)
                 await channel.send(`Hello <@${member.id}>! Please check your DMs for instructions on how to verify your account.`)
             } catch (e) {
                 console.log(e)
@@ -108,17 +130,12 @@ Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=$
     })
 
     async function verify(interaction) {
-        console.log('verify')
+
         if (interaction.member.roles.cache.some(role => role.id === '904760669520408628')) {
             interaction.reply('You are already verified')
         } else {
             try {
-                console.log('send')
-                await interaction.member.send(
-                    `Welcome to Avalon!
-Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=${interaction.member.user.id}`
-                )
-
+                await sendVerifyMessage(interaction.user)
                 if(interaction.user.id === '430781346730999809')
                     await interaction.reply('fuck you')
                 else
