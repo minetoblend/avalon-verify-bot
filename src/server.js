@@ -34,7 +34,7 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
         const channel = await guild.channels.fetch('905513438997020712')
 
         if(channel) {
-            await channel.send(`${member.nickname || member.displayName} verified as https://osu.ppy.sh/users/${user.profileId}`)
+            await channel.send(`<@${member.nickname || member.displayName}> verified as https://osu.ppy.sh/users/${user.profileId}`, {"allowedMentions": { "users" : []}})
         }
     }
 
