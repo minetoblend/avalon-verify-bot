@@ -92,7 +92,8 @@ const VerifyTokenModel = mongoose.model('verifyToken', VerifyTokenSchema);
     });
 
     async function createVerifyToken(user) {
-        const existingToken = await VerifyTokenModel.deleteMany({ discordProfileId: user.id })
+        await VerifyTokenModel.deleteMany({ discordProfileId: user.id })
+
         const token = new VerifyTokenModel({
             token: uuid.v4(),
             discordProfileId: user.id,
