@@ -18,6 +18,26 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
     app.use(passport.initialize())
     app.use(passport.session())
 
+    async function logVerification(user, discordProfileId) {
+        const guild = await client.guilds.fetch({guild: process.env.DISCORD_GUILD_ID})
+
+        if (!guild)
+            return
+
+        const member = await guild.members.fetch({user: discordProfileId})
+
+        if (!member)
+            return
+
+        console.log(`${member.nickname || member.displayName} verified as https://osu.ppy.sh/users/${user.profileId}`)
+
+        const channel = await guild.channels.fetch('905513438997020712')
+
+        if(channel) {
+            await channel.send(`${member.nickname || member.displayName} verified as https://osu.ppy.sh/users/${user.profileId}`)
+        }
+    }
+
     passport.use(new OsuStrategy({
             type: 'StrategyOptionsWithRequest',
             clientID: process.env.OSU_CLIENT_ID,
@@ -43,6 +63,8 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
                     return
                 }
 
+                logVerification(user, discordProfileId)
+
                 done(null, user)
             } else {
                 const newUser = new MemberModel({
@@ -53,6 +75,9 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
 
                 await newUser.save()
                 VerifyTokenModel.deleteMany({discordProfileId})
+
+                logVerification(newUser, discordProfileId)
+
                 done(null, newUser)
             }
         })
