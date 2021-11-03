@@ -29,6 +29,8 @@ async function runServer(client, MemberModel, VerifyTokenModel) {
         if (!member)
             return
 
+        console.log(`${member.nickname || member.displayName} verified as https://osu.ppy.sh/users/${user.profileId}`)
+
         const channel = await guild.channels.fetch('905513438997020712')
 
         if(channel) {
