@@ -109,6 +109,7 @@ Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=$
     }
 
     client.on('guildMemberAdd', async member => {
+        return;
         const channel = await member.guild.channels.fetch('878372599799902300')
 
         const user = await MemberModel.findOne({discordProfileId: member.id})
