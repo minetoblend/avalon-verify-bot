@@ -136,15 +136,14 @@ Click here to verify your account: http://www.mapping-tools.io/avalon/verify?q=$
         if (interaction.member.roles.cache.some(role => role.id === '904760669520408628')) {
             interaction.reply('You are already verified')
         } else {
+            await interaction.deferReply()
+
             try {
                 await sendVerifyMessage(interaction.user)
-                if(interaction.user.id === '430781346730999809')
-                    await interaction.reply('fuck you')
-                else
-                    await interaction.reply(`I've sent you instructions on how to verify as a private message.`);
+                await interaction.editReply(`I've sent you instructions on how to verify as a private message.`);
             } catch (e) {
                 console.log(e)
-                await interaction.reply(`I couldn't send you instructions on how to verify. Please enable private messages on this server.`);
+                await interaction.editReply(`I couldn't send you instructions on how to verify. Please enable private messages on this server.`);
             }
         }
 
